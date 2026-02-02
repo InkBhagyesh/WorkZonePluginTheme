@@ -1,0 +1,79 @@
+{
+  "_version": "1.81.0",
+  "sap.app": {
+    "id": "com.sap.winslow.themeplugin",
+    "type": "component",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.20.1",
+      "toolsId": "af8f61c8-9b05-4787-a095-eba9146dd9f4"
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "Shell-plugin": {
+          "semanticObject": "Shell",
+          "action": "plugin",
+          "hideLauncher": true,
+          "title": "Theme Manager Plugin"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.144.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "com.sap.winslow.themeplugin.i18n.i18n"
+        }
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "comsapwinslowthemeplugin"
+  },
+  "sap.flp": { "type": "plugin" }
+}
