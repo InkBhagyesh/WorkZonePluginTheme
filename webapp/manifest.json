@@ -15,6 +15,17 @@
       "version": "1.20.1",
       "toolsId": "af8f61c8-9b05-4787-a095-eba9146dd9f4"
     },
+    "dataSources": {
+      "mainService": {
+        "uri": "/v2/odata/v4/main/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/mainService/metadata.xml",
+          "odataVersion": "2.0"
+        }
+      }
+    },
     "crossNavigation": {
       "inbounds": {
         "Shell-plugin": {
@@ -61,6 +72,11 @@
         "settings": {
           "bundleName": "com.sap.winslow.themeplugin.i18n.i18n"
         }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
       }
     },
     "resources": {

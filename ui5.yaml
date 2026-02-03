@@ -10,15 +10,15 @@ server:
       afterMiddleware: compression
       configuration:
         ignoreCertErrors: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
-        backend:
-          - path: /scim
-            url: https://afxp71ubt.accounts.ondemand.com
-            destination: IAS
         ui5:
           path:
             - /resources
             - /test-resources
           url: https://ui5.sap.com
+        backend:
+          - path: /v2
+            url: https://winslow-mgmt-services-unit-trust-fsm-btp-dev-pt8gi5dj-w6c52d584.cfapps.ap10.hana.ondemand.com
+            destination: BMSPortal_API
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

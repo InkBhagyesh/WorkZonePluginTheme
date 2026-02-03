@@ -1,70 +1,58 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
-    "sap/ui/core/Theming"
-    //"com/sap/winslow/themeplugin/model/models"
-], (UIComponent, Theming) => {
+    "sap/ui/core/Theming",
+    "sap/m/MessageToast"
+], function (UIComponent, Theming, MessageToast) {
     "use strict";
 
     return UIComponent.extend("com.sap.winslow.themeplugin.Component", {
         metadata: {
             manifest: "json",
-            interfaces: [
-                "sap.ui.core.IAsyncContentCreation"
-            ]
+            interfaces: ["sap.ui.core.IAsyncContentCreation"]
         },
 
-        init() {
-            debugger
-            // call the base component's init function
+        init: function () {
             UIComponent.prototype.init.apply(this, arguments);
 
-            this._getIASGroups();
+            const oModel = this.getModel();
+            const oUserInfoService = sap.ushell.Container.getService("UserInfo");
+            const sEmail = oUserInfoService.getEmail();
 
-            // Access UserInfo to determine theme logic
-            const oUserInfo = sap.ushell.Container.getService("UserInfo");
-            const sUserId = oUserInfo.getUser().getId();
-            console.log("User ID :" + sUserId);
-            var themeService = "https://fsm-btp-dev-pt8gi5dj.workzone.cfapps.ap10.hana.ondemand.com/comsapuitheming.runtime/themeroot/v1";
+            // 1. Determine the path to your custom themes
+            // This assumes your themes are deployed within the plugin's 'themes' folder
+            const sThemeRoot = sap.ui.require.toUrl("com/sap/winslow/themeplugin/themes");
 
-
-
-            // Set the theme programmatically
-            if (sUserId.includes("4b05fcf2-3088-41b3-bcf6-adcd4f0ea75c")) {
-                Theming.setTheme("YVE_Theme");
-                var fullTheme = "YVE_Theme" + "@" + themeService;
-                this._redirectWithTheme(fullTheme, "YVE_Theme");
-                console.log("YVE theme applied");
-            } else {
-                Theming.setTheme("Winslow_Theme");
-                var fullTheme = "Winslow_Theme" + "@" + themeService;
-                this._redirectWithTheme(fullTheme, "Winslow_Theme");
-                console.log("Winslow theme applied");
-            }
-        },
-
-        _getIASGroups: function () {
-            var settings = {
-                "url": "/scim/Users?filter=emails.value%20eq%20%22bhagyeshshah16@gmail.com%22",
-                "method": "GET",
-                "timeout": 0,
-                "headers": {
-                    "Content-Type": "application/scim+json"
+            oModel.callFunction("/getUserRoleByEmail", {
+                method: "GET",
+                urlParameters: { EmailId: sEmail },
+                success: (oData) => {
+                    const sTargetTheme = (oData.getUserRoleByEmail === "YVE") ? "YVE_Theme" : "Winslow_Theme";
+                    
+                    this._applyGlobalTheme(sTargetTheme, sThemeRoot);
                 },
-            };
-
-            $.ajax(settings).done(function (response) {
-                console.log(response);
+                error: (oError) => {
+                    console.error("Theme fetching failed", oError);
+                }
             });
         },
 
-        _redirectWithTheme: function (themeValue, themeName) {
-            debugger;
-            var url = new URL(window.location.href);
-            var currentTheme = sap.ui.getCore().getConfiguration().getTheme();
-            if (!themeName || themeName !== currentTheme) {
-                url.searchParams.set("sap-theme", themeValue);
-                window.location.replace(url.toString());
+        _applyGlobalTheme: function (sThemeName, sRoot) {
+            console.log("Applying Theme globally: " + sThemeName);
+
+            // A. Register the theme so UI5 knows where the .css files are
+            // This is the most common reason 'other parts' don't change
+            sap.ui.getCore().applyTheme(sThemeName, sRoot);
+
+            // B. Sync the Shell User Profile (Forces the Shell to broadcast the change)
+            if (sap.ushell && sap.ushell.Container) {
+                const oUser = sap.ushell.Container.getService("UserInfo").getUser();
+                if (oUser.getTheme() !== sThemeName) {
+                    oUser.setTheme(sThemeName);
+                }
             }
+
+            // C. Force a DOM attribute update (Fixes some Workzone caching)
+            document.documentElement.setAttribute("data-sap-ui-theme", sThemeName);
         }
     });
 });
