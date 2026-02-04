@@ -18,18 +18,20 @@ sap.ui.define([
             const oUserInfoService = sap.ushell.Container.getService("UserInfo");
             const sEmail = oUserInfoService.getEmail();
 
-            // 1. Determine the path to your custom themes
-            // This assumes your themes are deployed within the plugin's 'themes' folder
+            // Path to custom themes folder
             const sThemeRoot = sap.ui.require.toUrl("com/sap/winslow/themeplugin/themes");
 
             oModel.callFunction("/getUserRoleByEmail", {
                 method: "GET",
                 urlParameters: { EmailId: sEmail },
+
                 success: (oData) => {
-                    const sTargetTheme = (oData.getUserRoleByEmail === "YVE") ? "YVE_Theme" : "Winslow_Theme";
-                    
+                    const sTargetTheme =
+                        (oData.getUserRoleByEmail === "YVE") ? "YVE_Theme" : "Winslow_Theme";
+
                     this._applyGlobalTheme(sTargetTheme, sThemeRoot);
                 },
+
                 error: (oError) => {
                     console.error("Theme fetching failed", oError);
                 }
@@ -37,21 +39,30 @@ sap.ui.define([
         },
 
         _applyGlobalTheme: function (sThemeName, sRoot) {
-            console.log("Applying Theme globally: " + sThemeName);
 
-            // A. Register the theme so UI5 knows where the .css files are
-            // This is the most common reason 'other parts' don't change
-            sap.ui.getCore().applyTheme(sThemeName, sRoot);
+            if (!sThemeName || !sRoot) {
+                console.error("Theme name or theme root missing");
+                return;
+            }
 
-            // B. Sync the Shell User Profile (Forces the Shell to broadcast the change)
+            // Register custom theme path
+            sap.ui.getCore().setThemeRoot(sThemeName, sRoot);
+
+            // Apply theme
+            sap.ui.getCore().applyTheme(sThemeName);
+
+            // Update FLP user theme
             if (sap.ushell && sap.ushell.Container) {
-                const oUser = sap.ushell.Container.getService("UserInfo").getUser();
-                if (oUser.getTheme() !== sThemeName) {
-                    oUser.setTheme(sThemeName);
+                const oUserInfo = sap.ushell.Container.getService("UserInfo");
+                if (oUserInfo) {
+                    const oUser = oUserInfo.getUser();
+                    if (oUser.getTheme() !== sThemeName) {
+                        oUser.setTheme(sThemeName);
+                    }
                 }
             }
 
-            // C. Force a DOM attribute update (Fixes some Workzone caching)
+            // Workzone fix (force DOM update)
             document.documentElement.setAttribute("data-sap-ui-theme", sThemeName);
         }
     });
