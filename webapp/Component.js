@@ -1,8 +1,6 @@
 sap.ui.define([
-    "sap/ui/core/UIComponent",
-    "sap/ui/core/Theming",
-    "sap/m/MessageToast"
-], function (UIComponent, Theming, MessageToast) {
+    "sap/ui/core/UIComponent"
+], function (UIComponent) {
     "use strict";
 
     return UIComponent.extend("com.sap.winslow.themeplugin.Component", {
@@ -14,56 +12,56 @@ sap.ui.define([
         init: function () {
             UIComponent.prototype.init.apply(this, arguments);
 
-            const oModel = this.getModel();
+            this._sThemeRoot = sap.ui.require.toUrl("com/sap/winslow/themeplugin/themes");
+
             const oUserInfoService = sap.ushell.Container.getService("UserInfo");
             const sEmail = oUserInfoService.getEmail();
-
-            // Path to custom themes folder
-            const sThemeRoot = sap.ui.require.toUrl("com/sap/winslow/themeplugin/themes");
+            const oModel = this.getModel();
 
             oModel.callFunction("/getUserRoleByEmail", {
                 method: "GET",
                 urlParameters: { EmailId: sEmail },
 
                 success: (oData) => {
-                    const sTargetTheme =
+                    this._sTargetTheme =
                         (oData.getUserRoleByEmail === "YVE") ? "YVE_Theme" : "Winslow_Theme";
 
-                    this._applyGlobalTheme(sTargetTheme, sThemeRoot);
+                    sap.ui.getCore().setThemeRoot(this._sTargetTheme, this._sThemeRoot);
+
+                    this._applyTheme();
+                    this._attachNavigationListener();
                 },
 
-                error: (oError) => {
-                    console.error("Theme fetching failed", oError);
+                error: function (err) {
+                    console.log("Theme fetch failed", err);
                 }
             });
         },
 
-        _applyGlobalTheme: function (sThemeName, sRoot) {
+        _attachNavigationListener: function () {
+            // debugger
+            // Hash change (all navigation)
+            window.addEventListener("hashchange", this._applyTheme.bind(this));
 
-            if (!sThemeName || !sRoot) {
-                console.error("Theme name or theme root missing");
-                return;
+            // Shell theme change
+            sap.ushell.Container.getRenderer().then((oRenderer) => {
+                oRenderer.attachThemeChanged(this._applyTheme.bind(this));
+            });
+        },
+        _applyTheme: function () {
+            // debugger
+            if (!this._sTargetTheme) return;
+
+            sap.ui.getCore().setThemeRoot(this._sTargetTheme, this._sThemeRoot);
+            sap.ui.getCore().applyTheme(this._sTargetTheme);
+
+            const oUserInfo = sap.ushell.Container.getService("UserInfo");
+            if (oUserInfo) {
+                const oUser = oUserInfo.getUser();
+                // if (oUser.getTheme() !== this._sTargetTheme) {
+                    oUser.setTheme(this._sTargetTheme);
+                // }
             }
-
-            // Register custom theme path
-            sap.ui.getCore().setThemeRoot(sThemeName, sRoot);
-
-            // Apply theme
-            sap.ui.getCore().applyTheme(sThemeName);
-
-            // Update FLP user theme
-            if (sap.ushell && sap.ushell.Container) {
-                const oUserInfo = sap.ushell.Container.getService("UserInfo");
-                if (oUserInfo) {
-                    const oUser = oUserInfo.getUser();
-                    if (oUser.getTheme() !== sThemeName) {
-                        oUser.setTheme(sThemeName);
-                    }
-                }
-            }
-
-            // Workzone fix (force DOM update)
-            document.documentElement.setAttribute("data-sap-ui-theme", sThemeName);
         }
     });
 });
